@@ -2,9 +2,9 @@
   "bind_ip": "127.0.0.1",
   "bind_port": 12315,
   "proxy_max_retry": 5,
-  "proxy_expire_time": 10,
+  "proxy_expire_time": 20,
   "proxy_pool_length": 50,
   "proxy_connect_time_out": 1,
-  "check_proxy_time_period": 10,
-  "refresh_proxy_time_period": 5
+  "check_proxy_time_period": 5,
+  "refresh_proxy_time_period": 10
 }
