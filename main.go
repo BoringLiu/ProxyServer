@@ -78,7 +78,7 @@ func getProxies() {
 	if len(freeIndex) == 0 {
 		return
 	}
-
+	const ProxyApiUrl = "https://api.xiaoxiangdaili.com/ip/get?appKey=1253383099283558400&appSecret=gIkxvtkn&cnt=5&wt=json"
 	response, err := http.Get(ProxyApiUrl)
 	if err != nil {
 		return
