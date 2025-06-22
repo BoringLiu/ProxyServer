@@ -138,23 +138,109 @@ func forward(conn net.Conn, remote string, retry int) {
 	go ioCopy(client, conn)
 }
 
+//	func checkProxyList() {
+//		log.Printf("代理检测中，代理池容量: %d\n", len(proxyList)-len(freeIndex))
+//		for i := 0; i < len(proxyList) && proxyList[i] != ""; i++ {
+//			go func(index int) {
+//				proxy := strings.Split(proxyList[index], "#")[0]
+//				period := strings.Split(proxyList[index], "#")[1]
+//				if period < strconv.FormatInt(time.Now().Unix(), 10) || !checkProxy(proxy) {
+//					mu.Lock()
+//					defer mu.Unlock()
+//					log.Printf("remove inactive proxy %s", proxy)
+//					proxyList[index] = ""
+//					freeIndex <- index
+//				}
+//			}(i)
+//		}
+//		time.Sleep(time.Second * time.Duration(config.CheckProxyTimePeriod))
+//		checkProxyList()
+//	}
+//func checkProxyList() {
+//	for {
+//		log.Printf("代理检测中，代理池容量: %d\n", len(proxyList)-len(freeIndex))
+//		for i := 0; i < len(proxyList); i++ {
+//			if proxyList[i] == "" {
+//				continue
+//			}
+//			mu.Lock()
+//			parts := strings.Split(proxyList[i], "#")
+//			if len(parts) < 2 {
+//				proxyList[i] = ""
+//				freeIndex <- i
+//				mu.Unlock()
+//				continue
+//			}
+//			proxy := parts[0]
+//			periodInt, err := strconv.ParseInt(parts[1], 10, 64)
+//			now := time.Now().Unix()
+//			if err != nil || periodInt < now || !checkProxy(proxy) {
+//				log.Printf("remove inactive proxy %s", proxy)
+//				proxyList[i] = ""
+//				freeIndex <- i
+//			}
+//			mu.Unlock()
+//		}
+//		time.Sleep(time.Duration(config.CheckProxyTimePeriod) * time.Second)
+//	}
+//}
+
 func checkProxyList() {
-	log.Printf("代理检测中，代理池容量: %d\n", len(proxyList)-len(freeIndex))
-	for i := 0; i < len(proxyList) && proxyList[i] != ""; i++ {
-		go func(index int) {
-			proxy := strings.Split(proxyList[index], "#")[0]
-			period := strings.Split(proxyList[index], "#")[1]
-			if period >= strconv.FormatInt(time.Now().Unix(), 10) || checkProxy(proxy) {
-				mu.Lock()
-				defer mu.Unlock()
-				log.Printf("remove inactive proxy %s", proxy)
-				proxyList[index] = ""
-				freeIndex <- index
+	for {
+		log.Printf("代理检测中，代理池容量: %d\n", len(proxyList)-len(freeIndex))
+
+		mu.Lock()
+		// 先复制代理快照，减少持锁时间
+		proxies := make([]string, len(proxyList))
+		copy(proxies, proxyList)
+		mu.Unlock()
+
+		type result struct {
+			index  int
+			remove bool
+		}
+		results := make(chan result, len(proxies))
+
+		var wg sync.WaitGroup
+		for i, p := range proxies {
+			if p == "" {
+				continue
 			}
-		}(i)
+			wg.Add(1)
+			go func(idx int, proxyStr string) {
+				defer wg.Done()
+
+				parts := strings.Split(proxyStr, "#")
+				if len(parts) < 2 {
+					results <- result{idx, true}
+					return
+				}
+				proxy := parts[0]
+				periodInt, err := strconv.ParseInt(parts[1], 10, 64)
+				now := time.Now().Unix()
+				if err != nil || periodInt < now || !checkProxy(proxy) {
+					results <- result{idx, true}
+					return
+				}
+				results <- result{idx, false}
+			}(i, p)
+		}
+
+		wg.Wait()
+		close(results)
+
+		mu.Lock()
+		for r := range results {
+			if r.remove {
+				log.Printf("remove inactive proxy %s", proxies[r.index])
+				proxyList[r.index] = ""
+				freeIndex <- r.index
+			}
+		}
+		mu.Unlock()
+		log.Printf("代理清理完毕，代理池容量: %d\n", len(proxyList)-len(freeIndex))
+		time.Sleep(time.Duration(config.CheckProxyTimePeriod) * time.Second)
 	}
-	time.Sleep(time.Second * time.Duration(config.CheckProxyTimePeriod))
-	checkProxyList()
 }
 
 func main() {
