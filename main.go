@@ -20,7 +20,7 @@ var (
 	mu          sync.Mutex
 	proxyList   []string
 	freeIndex   chan int
-	ProxyApiUrl = "https://api.xiaoxiangdaili.com/ip/get?appKey=956913709144756224&appSecret=eTDUzAY1&cnt=1&wt=json"
+	ProxyApiUrl = "Your Proxy Api url"
 )
 
 type Config struct {
