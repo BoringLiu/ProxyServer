@@ -1,7 +1,11 @@
 # ProxyServer
 
 将短效代理API构建成随机可检测的隧道代理池
-方案基于https://github.com/ThinkerWen/ProxyServer的改进
+方案改进了原项目的代理检测逻辑，使得剔除无效代理的处理是实时的
+且亦可对要发起请求的目标链接检测代理可用性
+（但会浪费一次请求机会且无法知道下次请求是否成功，目前没有并入检测）
+使得调用本服务的进程不会随机拿到已无效的代理地址，增强隧道的稳定性。
+https://github.com/ThinkerWen/ProxyServer
 <br>
 
 ## 介绍
@@ -18,11 +22,12 @@ API代理即：
 
 ## 安装使用
 （项目中的示例使用的是[小象代理](https://www.xiaoxiangdaili.com/)
+<br>
+```
 go get ProxyServer    # 下载依赖项
 go build ProxyServer  # 编译可执行程序
 ./ProxyServer         # 运行
 ```
-
 <br>
 
 ## 使用
