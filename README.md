@@ -1,28 +1,23 @@
 # ProxyServer
 
-将API代理构建成隧道代理池
-
+将短效代理API构建成随机可检测的隧道代理池
+方案基于https://github.com/ThinkerWen/ProxyServer的改进
 <br>
 
 ## 介绍
-此项目用于将API代理构建成隧道代理池，即通过一个IP和端口来自动随机取出代理池中的代理。
+此项目用于将API代理构建成隧道代理池，即通过一个IP和端口来自动随机取出代理池中的IP.
 
 API代理即：
 * 通过API来获取代理，返回值是代理列表包含1~n个代理
 * 例如：`[{"ip":"xxx.xxx.xxx.xxx","port":xx},{"ip":"xxx.xxx.xxx.xxx","port":xx}]`
 
-这样的代理不方便利用，在代码中通常需要二次操作，这个项目便能完美解决这个问题。
+通过本项目处理后可达成随机挑选代理并直接发起请求
+无需在调用的项目中对API代理进行二次处理
 
 <br>
 
-## 安装
-1.克隆本项目
-```bash
-git clone https://github.com/ThinkerWen/ProxyServer.git
-```
-2.修改`main.go`文件中的`getProxies()`函数，将它改为您的API代理的获取函数即可。（项目中的示例使用的是[小象代理](https://www.xiaoxiangdaili.com/)
-
-```bash
+## 安装使用
+（项目中的示例使用的是[小象代理](https://www.xiaoxiangdaili.com/)
 go get ProxyServer    # 下载依赖项
 go build ProxyServer  # 编译可执行程序
 ./ProxyServer         # 运行
